@@ -2,6 +2,7 @@ import Fastify from 'fastify'
 import cors from '@fastify/cors'
 import jwt from '@fastify/jwt'
 import 'dotenv/config'
+import { ZodError } from 'zod'
 
 const app = Fastify({ logger: true })
 
@@ -21,6 +22,20 @@ app.decorate('authenticate', async (request: any, reply: any) => {
   } catch (err) {
     reply.send(err)
   }
+})
+
+// --- Gestion des erreurs Zod ---
+app.setErrorHandler((error, request, reply) => {
+  if (error instanceof ZodError) {
+    return reply.code(400).send({
+      error: 'Données invalides',
+      details: error.issues.map((e) => ({
+        field: e.path.join('.'),
+        message: e.message,
+      })),
+    })
+  }
+  reply.send(error)
 })
 
 // --- Routes ---

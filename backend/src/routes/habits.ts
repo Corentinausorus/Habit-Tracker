@@ -1,33 +1,27 @@
 import { FastifyInstance } from 'fastify'
 import { getUserHabits, createNewHabit, removeHabit } from '../services/habitService.js'
+import { createHabitSchema } from '../schemas/habit.schema.js'
 
 export default async function habitRoutes(app: FastifyInstance) {
 
   const auth = { preHandler: [app.authenticate] }
 
-  // GET /api/habits
-  app.get('/', auth, async (request, reply) => {
+  app.get('/', auth, async (request: any, reply: any) => {
     const { userId } = request.user as { userId: string }
 
     const habits = await getUserHabits(userId)
     return reply.send(habits)
   })
 
-  // POST /api/habits
-  app.post('/', auth, async (request, reply) => {
+  app.post('/', auth, async (request: any, reply: any) => {
     const { userId } = request.user as { userId: string }
-    const { name, hasChoices, choiceNames } = request.body as {
-      name: string
-      hasChoices: boolean
-      choiceNames?: string[]
-    }
+    const body = createHabitSchema.parse(request.body)
 
-    const habit = await createNewHabit(userId, name, hasChoices, choiceNames)
+    const habit = await createNewHabit(userId, body.name, body.hasChoices, body.choiceNames)
     return reply.code(201).send(habit)
   })
 
-  // DELETE /api/habits/:id
-  app.delete('/:id', auth, async (request, reply) => {
+  app.delete('/:id', auth, async (request: any, reply: any) => {
     const { userId } = request.user as { userId: string }
     const { id } = request.params as { id: string }
 

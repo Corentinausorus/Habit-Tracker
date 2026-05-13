@@ -1,7 +1,7 @@
 # Progression du projet — Habit Tracker
 
 ## État actuel
-Le backend est structuré et fonctionnel. Le serveur démarre, les tables sont créées en base, et le endpoint `/api/auth/register` a été testé avec succès via Postman.
+Le backend est complet et fonctionnel. Toutes les routes sont testées via Postman. On attaque le frontend Vue 3.
 
 ---
 
@@ -23,32 +23,37 @@ Le backend est structuré et fonctionnel. Le serveur démarre, les tables sont c
 - [x] Repositories : `userRepository.ts`, `habitRepository.ts`, `logRepository.ts`
 - [x] Services : `authService.ts`, `habitService.ts`, `logService.ts`
 - [x] Routes : `auth.ts`, `habits.ts`, `logs.ts`
+- [x] Schemas Zod : `auth.schema.ts`, `habit.schema.ts`, `log.schema.ts`
+- [x] Error handler global Zod dans `server.ts`
 - [x] Serveur Fastify (`server.ts`) avec JWT, CORS, routes enregistrées
 - [x] Tables créées en base via `db:push`
-- [x] Test Postman : `POST /api/auth/register` ✓
+- [x] Toutes les routes testées via Postman ✓
+
+### Outils
+- [x] Postman configuré avec environnement, variables et auto-save du token
 
 ---
 
 ## En cours 🔄
 
-- [ ] **Validation Zod** — ajouter la validation des données entrantes sur toutes les routes (prochaine étape immédiate)
+- [ ] **Frontend Vue 3** — prochaine étape immédiate
 
 ---
 
 ## À faire
 
-### Backend
-- [ ] Tester toutes les routes avec Postman (login, habits CRUD, logs)
-- [ ] Gestion centralisée des erreurs (error handler global Fastify)
-- [ ] Script d'import des données historiques depuis Google Sheets
-
-### Frontend (pas encore commencé)
-- [ ] Initialiser le projet Vue 3
+### Frontend
+- [ ] Initialiser le projet Vue 3 dans le dossier `frontend/`
+- [ ] Choisir les outils (Vue Router, Pinia, bibliothèque UI)
 - [ ] Page de login / register
 - [ ] Page principale — liste des habitudes du jour
 - [ ] Complétion d'une habitude (avec ou sans choix)
 - [ ] Historique et stats hebdomadaires
 - [ ] Système XP / gamification
+
+### Backend (améliorations futures)
+- [ ] Script d'import des données historiques depuis Google Sheets
+- [ ] Endpoint stats hebdomadaires
 
 ### Déploiement (plus tard)
 - [ ] Dockerfile pour le backend
@@ -59,4 +64,4 @@ Le backend est structuré et fonctionnel. Le serveur démarre, les tables sont c
 ---
 
 ## Prochaine étape immédiate
-Ajouter la validation Zod sur les routes — installer Zod, créer les schémas de validation pour auth, habits et logs.
+Initialiser le projet Vue 3 dans le dossier `frontend/` et commencer par la page de login.

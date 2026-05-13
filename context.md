@@ -19,10 +19,10 @@ Application web de suivi d'habitudes quotidiennes pour remplacer un Google Sheet
 | Backend | Node.js + Fastify + TypeScript |
 | ORM | Drizzle ORM |
 | Base de données | PostgreSQL 16 (Docker) |
-| Frontend | Vue 3 (pas encore commencé) |
-| Validation | Zod (en cours d'ajout) |
+| Validation | Zod v4 |
 | Auth | JWT via @fastify/jwt |
 | Hashage | bcryptjs (pas bcrypt — problèmes de compilation native sur certains PC) |
+| Frontend | Vue 3 (prochaine étape) |
 | Conteneurisation | Docker + Docker Compose |
 
 ---
@@ -48,9 +48,13 @@ habit-tracker/
 │   │   │   ├── auth.ts
 │   │   │   ├── habits.ts
 │   │   │   └── logs.ts
+│   │   ├── schemas/
+│   │   │   ├── auth.schema.ts   ← validation Zod register/login
+│   │   │   ├── habit.schema.ts  ← validation Zod création habitude
+│   │   │   └── log.schema.ts    ← validation Zod création log
 │   │   ├── types/
 │   │   │   └── fastify.d.ts     ← déclaration du décorateur authenticate
-│   │   └── server.ts            ← point d'entrée Fastify
+│   │   └── server.ts            ← point d'entrée Fastify + error handler Zod
 │   ├── drizzle.config.ts
 │   ├── tsconfig.json
 │   ├── package.json
@@ -81,7 +85,8 @@ Principe clé : l'existence d'un log implique que l'habitude a été faite. Pas 
 
 La structure suit le pattern **Route → Service → Repository → Drizzle** :
 
-- **Routes** : gèrent la requête HTTP, extraient body/params, appellent le service, renvoient la réponse
+- **Routes** : gèrent la requête HTTP, valident le body avec Zod, appellent le service, renvoient la réponse
+- **Schemas** : schémas Zod de validation — équivalent des DTOs Spring/Symfony
 - **Services** : contiennent la logique métier (vérifications, règles)
 - **Repositories** : accès à la base uniquement, aucune logique métier
 - **Drizzle** : remplace la couche Repository "brute" — génère le SQL depuis le schéma TypeScript
@@ -91,6 +96,7 @@ La structure suit le pattern **Route → Service → Repository → Drizzle** :
 - `repositories/` = Repository Spring Data / Repository Doctrine
 - `services/` = Service Spring / Service Symfony
 - `routes/` = Controller Spring / Controller Symfony
+- `schemas/` = DTOs avec annotations de validation
 - Drizzle = EntityManager / DBAL
 
 ---
@@ -102,14 +108,17 @@ La structure suit le pattern **Route → Service → Repository → Drizzle** :
 - `tsx` permet de lancer TypeScript directement sans compilation manuelle
 - `drizzle-kit push` lit `schema.ts` et crée/met à jour les tables en base
 - Le décorateur `authenticate` est déclaré dans `types/fastify.d.ts` pour que TypeScript le reconnaisse sur `FastifyInstance`
-- `bcryptjs` au lieu de `bcrypt` pour éviter les problèmes de compilation native sur Windows (notamment sur réseaux d'entreprise avec proxy SSL)
+- `bcryptjs` au lieu de `bcrypt` pour éviter les problèmes de compilation native sur Windows
+- Zod v4 : utiliser `z.email()` et `z.uuid()` directement, pas `z.string().email()` (déprécié)
+- Zod v4 : utiliser `error.issues` pas `error.errors`
+- Error handler global dans `server.ts` qui intercepte les `ZodError` et renvoie un 400 avec les détails
 
 ---
 
 ## Configuration locale
 
 - Docker Desktop requis pour PostgreSQL en local
-- PostgreSQL tourne sur le port `5432` (attention aux conflits si PostgreSQL est installé nativement)
+- PostgreSQL tourne sur le port `5432` (attention aux conflits si PostgreSQL est installé nativement — changer le port dans docker-compose.yml si nécessaire)
 - `.env` à créer manuellement sur chaque nouveau PC (non commité) :
 
 ```env
@@ -121,8 +130,17 @@ FRONTEND_URL=http://localhost:5173
 
 - Commandes utiles :
   - `docker compose up -d` (depuis la racine) → démarre PostgreSQL
+  - `docker compose up -d --build` → démarre en reconstruisant les images
   - `npm run dev` (depuis backend/) → démarre le serveur
   - `npm run db:push` (depuis backend/) → applique le schéma en base
+
+---
+
+## Postman
+Collection configurée avec :
+- Environnement "Habit Tracker Local" avec variables `{{baseUrl}}` et `{{token}}`
+- Authorization Bearer `{{token}}` au niveau de la collection
+- Script dans le endpoint login pour auto-sauvegarder le token : `pm.environment.set("token", pm.response.json().token)`
 
 ---
 

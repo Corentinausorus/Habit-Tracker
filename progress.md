@@ -1,7 +1,7 @@
 # Progression du projet — Habit Tracker
 
 ## État actuel
-Le backend est complet et fonctionnel. Toutes les routes sont testées via Postman. On attaque le frontend Vue 3.
+Le backend est fonctionnel et ses routes ont été testées via Postman. Le frontend Vue 3 est initialisé et la connexion est reliée à l'API.
 
 ---
 
@@ -32,20 +32,27 @@ Le backend est complet et fonctionnel. Toutes les routes sont testées via Postm
 ### Outils
 - [x] Postman configuré avec environnement, variables et auto-save du token
 
+### Frontend
+- [x] Projet Vue 3 avec TypeScript et Vite
+- [x] Vue Router et Pinia
+- [x] Tailwind CSS 4
+- [x] ESLint et Prettier
+- [x] Page de connexion reliée à `POST /api/auth/login`
+- [x] Session persistée dans `localStorage`
+- [x] Page d'accueil protégée et déconnexion
+
 ---
 
 ## En cours 🔄
 
-- [ ] **Frontend Vue 3** — prochaine étape immédiate
+- [ ] **Afficher les habitudes dans le frontend**
 
 ---
 
 ## À faire
 
 ### Frontend
-- [ ] Initialiser le projet Vue 3 dans le dossier `frontend/`
-- [ ] Choisir les outils (Vue Router, Pinia, bibliothèque UI)
-- [ ] Page de login / register
+- [ ] Page d'inscription
 - [ ] Page principale — liste des habitudes du jour
 - [ ] Complétion d'une habitude (avec ou sans choix)
 - [ ] Historique et stats hebdomadaires
@@ -64,4 +71,4 @@ Le backend est complet et fonctionnel. Toutes les routes sont testées via Postm
 ---
 
 ## Prochaine étape immédiate
-Initialiser le projet Vue 3 dans le dossier `frontend/` et commencer par la page de login.
+Afficher les habitudes de l'utilisateur connecté sur la page d'accueil.

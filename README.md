@@ -1,6 +1,6 @@
 # Habit Tracker
 
-Application web pédagogique de suivi d'habitudes quotidiennes, construite pour apprendre Node.js, TypeScript, Fastify, Drizzle ORM et, prochainement, Vue 3.
+Application web pédagogique de suivi d'habitudes quotidiennes, construite pour apprendre Node.js, TypeScript, Fastify, Drizzle ORM et Vue 3.
 
 Le projet vise à remplacer un Google Sheets utilisé depuis mi-2024 pour suivre environ 27 habitudes.
 
@@ -11,7 +11,7 @@ Le projet vise à remplacer un Google Sheets utilisé depuis mi-2024 pour suivre
 - Habitudes et validations quotidiennes disponibles.
 - Routes testées manuellement avec Postman.
 - Aucun test automatisé pour le moment.
-- Frontend Vue 3 à créer.
+- Frontend Vue 3 initialisé avec une page de connexion et une page protégée.
 - Déploiement homelab prévu ultérieurement.
 
 ## Fonctionnement général
@@ -45,7 +45,8 @@ Le frontend ne communiquera jamais directement avec PostgreSQL. Il appellera l'A
 | Accès aux données | Drizzle ORM |
 | Base de données | PostgreSQL 16 |
 | Environnement local | Docker Compose |
-| Frontend prévu | Vue 3 |
+| Frontend | Vue 3, TypeScript, Vite, Vue Router et Pinia |
+| Interface | Tailwind CSS 4 |
 
 Le projet utilise actuellement `bcrypt` pour les mots de passe. Le choix initial était `bcryptjs`, plus simple à installer sur Windows, mais cette migration n'a pas encore été réalisée.
 
@@ -126,6 +127,15 @@ Il est important d'exécuter `npm ci` dans `backend/`. Le véritable `package.js
 
 `npm ci` réinstalle exactement les versions enregistrées dans le lockfile. C'est la commande recommandée après un clonage.
 
+Installer ensuite les dépendances du frontend :
+
+```powershell
+cd ..\frontend
+npm ci
+```
+
+Le backend et le frontend sont deux applications Node.js indépendantes. Chacune possède donc son propre `package.json`, son propre lockfile et son propre dossier `node_modules`.
+
 ### Variables d'environnement
 
 Créer le fichier `backend/.env` :
@@ -138,6 +148,14 @@ FRONTEND_URL=http://localhost:5173
 ```
 
 Le fichier `.env` n'est pas versionné, car il peut contenir des secrets.
+
+Le frontend utilise `frontend/.env.local` :
+
+```env
+VITE_API_URL=http://localhost:3000
+```
+
+Le préfixe `VITE_` rend cette variable accessible au code exécuté dans le navigateur. Elle ne doit donc jamais contenir de secret.
 
 ## Démarrage
 
@@ -163,6 +181,15 @@ npm run dev
 
 L'API écoute par défaut sur `http://localhost:3000`.
 
+Dans un second terminal, démarrer Vue :
+
+```powershell
+cd frontend
+npm run dev
+```
+
+Le frontend écoute par défaut sur `http://localhost:5173`.
+
 ## Commandes utiles
 
 Depuis la racine :
@@ -185,6 +212,52 @@ npm run db:studio
 - `npm run dev` démarre Fastify avec rechargement automatique.
 - `npm run db:push` applique le schéma Drizzle à PostgreSQL.
 - `npm run db:studio` ouvre l'interface Drizzle Studio.
+
+Depuis `frontend/` :
+
+```powershell
+npm ci
+npm run dev
+npm run type-check
+npm run lint
+npm run format
+npm run build
+```
+
+- `npm run dev` démarre le serveur Vite avec rechargement instantané.
+- `npm run type-check` vérifie les types TypeScript des fichiers `.ts` et `.vue`.
+- `npm run lint` détecte et corrige certaines erreurs et mauvaises pratiques.
+- `npm run format` applique la mise en forme Prettier.
+- `npm run build` vérifie les types et produit les fichiers de production dans `dist/`.
+
+## Structure du frontend
+
+Le démarrage suit ce chemin :
+
+```text
+index.html -> main.ts -> App.vue -> RouterView -> vue active
+```
+
+- `index.html` fournit l'élément HTML `#app`.
+- `main.ts` crée Vue, installe Pinia et Vue Router, puis monte l'application.
+- `App.vue` contient le `RouterView`, emplacement où la page courante est affichée.
+- `router/index.ts` associe les URL aux vues et protège la page d'accueil.
+- `stores/auth.ts` conserve l'utilisateur et le JWT partagés dans l'application.
+- `services/authApi.ts` contient l'appel HTTP vers Fastify.
+- `views/` contient les composants correspondant à des pages.
+
+Les composants utilisent la Composition API avec `<script setup lang="ts">`.
+
+## Authentification frontend
+
+La page `/login` appelle `POST /api/auth/login` avec `fetch`. Après une réponse valide :
+
+1. Pinia conserve le JWT et l'utilisateur dans son état réactif ;
+2. la session est également écrite dans `localStorage` ;
+3. Vue Router redirige vers `/` ;
+4. la garde de navigation bloque `/` lorsqu'aucune session n'est disponible.
+
+`localStorage` permet de conserver la connexion après une actualisation. Il reste accessible au JavaScript de la page : une faille XSS pourrait donc exposer le token. Ce choix est acceptable pour cette étape pédagogique, mais devra être réévalué avant la production.
 
 ## API
 
@@ -269,8 +342,8 @@ La `DATABASE_URL` doit utiliser le port `5433`, pas `5432`, avec la configuratio
 1. Corriger les contrôles d'autorisation sur les logs.
 2. Ajouter des erreurs HTTP métier plus précises.
 3. Ajouter des tests automatisés.
-4. Initialiser le frontend Vue 3.
-5. Créer les pages d'inscription, de connexion et de suivi quotidien.
+4. Ajouter la page d'inscription.
+5. Afficher les habitudes sur la page d'accueil.
 6. Ajouter l'historique, les statistiques et la gamification.
 7. Conteneuriser l'application complète.
 8. Déployer sur le homelab Ubuntu avec Cloudflare Tunnel.

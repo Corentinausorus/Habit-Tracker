@@ -31,7 +31,7 @@ Fonctionnalités prévues :
 
 Le backend est implémenté et ses routes ont été testées manuellement avec Postman.
 
-Il n'existe pas encore de tests automatisés. Le frontend Vue 3 n'est pas encore présent dans le dépôt. Le déploiement sur le homelab est un objectif futur, mais il n'est pas encore configuré.
+Il n'existe pas encore de tests automatisés. Le frontend Vue 3 est initialisé avec une page de connexion, une session Pinia persistée dans `localStorage` et une page d'accueil protégée. Le déploiement sur le homelab est un objectif futur, mais il n'est pas encore configuré.
 
 ## Stack technique
 
@@ -43,7 +43,8 @@ Il n'existe pas encore de tests automatisés. Le frontend Vue 3 n'est pas encore
 | Validation | Zod v4 |
 | Authentification | JWT avec `@fastify/jwt` |
 | Hashage | `bcrypt` actuellement |
-| Frontend | Vue 3, à créer |
+| Frontend | Vue 3, TypeScript, Vite, Vue Router et Pinia |
+| Styles | Tailwind CSS 4 |
 | Conteneurisation | Docker Compose pour PostgreSQL |
 
 ### Écart connu concernant bcrypt
@@ -70,13 +71,41 @@ Habit-Tracker/
 |   |-- drizzle.config.ts
 |   |-- package.json
 |   `-- tsconfig.json
+|-- frontend/
+|   |-- src/
+|   |   |-- assets/
+|   |   |-- router/
+|   |   |-- services/
+|   |   |-- stores/
+|   |   |-- views/
+|   |   |-- App.vue
+|   |   `-- main.ts
+|   |-- package.json
+|   `-- vite.config.ts
 |-- context.md
 |-- docker-compose.yml
 |-- progress.md
 `-- README.md
 ```
 
-Le dossier `frontend/` sera créé lors de l'initialisation de Vue 3.
+Le frontend est une application Node.js distincte du backend. Les dépendances doivent être installées séparément dans chaque dossier.
+
+## Architecture frontend
+
+Le chargement suit ce flux :
+
+```text
+index.html -> main.ts -> App.vue -> RouterView -> vue active
+```
+
+- `main.ts` crée l'application Vue et installe Pinia et Vue Router ;
+- `App.vue` fournit l'emplacement de rendu de la page active ;
+- Vue Router associe `/login` et `/` à leurs vues et applique les gardes de navigation ;
+- le store Pinia `auth` contient la session partagée ;
+- `authApi.ts` isole l'appel `fetch` vers Fastify ;
+- Tailwind fournit les classes utilitaires utilisées dans les templates.
+
+La session est persistée dans `localStorage`. Cela simplifie l'apprentissage et permet de rester connecté après actualisation, mais le JWT serait accessible à du JavaScript injecté par une faille XSS.
 
 ## Architecture backend
 
@@ -195,6 +224,16 @@ npm run dev
 
 `npm ci` doit être lancé dans `backend/`, car le `package.json` contenant les dépendances de l'application se trouve dans ce dossier.
 
+Dans un second terminal :
+
+```powershell
+cd frontend
+npm ci
+npm run dev
+```
+
+Le frontend utilise `VITE_API_URL=http://localhost:3000` dans `.env.local`. Les variables préfixées par `VITE_` sont publiques dans le code navigateur et ne doivent pas contenir de secrets.
+
 ## Routes disponibles
 
 Routes publiques :
@@ -218,7 +257,8 @@ Routes protégées par JWT :
 - La lecture et la suppression de logs ne vérifient pas encore systématiquement leur appartenance à l'utilisateur connecté.
 - La création d'une habitude avec choix ne renvoie pas les choix créés.
 - `bcrypt` peut poser des problèmes d'installation native sur certaines machines Windows.
-- Le frontend et le déploiement de production restent à réaliser.
+- Le frontend ne contient pour le moment que l'authentification et une page d'accueil vide.
+- Le déploiement de production reste à réaliser.
 
 ## Déploiement homelab prévu
 
@@ -226,7 +266,7 @@ L'objectif à terme est de déployer l'application sur un Asus M32 sous Ubuntu S
 
 Travail restant :
 
-- créer le frontend Vue 3 ;
+- compléter le frontend Vue 3 avec l'inscription et les habitudes ;
 - ajouter les Dockerfiles de production ;
 - adapter Docker Compose pour l'application complète ;
 - gérer les variables secrètes de production ;

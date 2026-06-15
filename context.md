@@ -1,148 +1,238 @@
-# Contexte du projet — Habit Tracker
+# Contexte du projet - Habit Tracker
 
 ## Objectif pédagogique
-Corentin est étudiant en ingénierie informatique. Il connaît bien Java/Spring Boot et PHP/Symfony. Il découvre Node.js, TypeScript, Fastify et Drizzle. **L'objectif principal est qu'il apprenne et comprenne**, pas juste qu'il copie-colle du code. Il faut expliquer le pourquoi de chaque décision technique, faire des parallèles avec Spring Boot / Symfony quand c'est pertinent, et répondre à toutes ses questions conceptuelles avant d'avancer.
 
-Il préfère les réponses concises et directes, sans padding. Il n'aime pas re-expliquer le contexte — s'il manque des infos, reconnaître le gap plutôt que de demander.
+Corentin est étudiant en ingénierie informatique. Il connaît Java avec Spring Boot et PHP avec Symfony, et découvre Node.js, TypeScript, Fastify et Drizzle ORM.
 
----
+L'objectif principal du projet est d'apprendre et de comprendre, pas seulement de produire du code. Les décisions techniques doivent donc être expliquées, avec des parallèles vers Spring Boot ou Symfony lorsque cela aide.
+
+Préférences :
+
+- réponses concises et directes ;
+- explication du rôle de chaque couche ;
+- réponse aux questions conceptuelles avant d'avancer ;
+- ne pas demander de répéter un contexte déjà documenté.
 
 ## Description du projet
-Application web de suivi d'habitudes quotidiennes pour remplacer un Google Sheets existant (~27 habitudes suivies depuis mi-2024). Fonctionnalités prévues : completions binaires, scores, streaks, sessions sport, système XP/gamification.
 
----
+Habit Tracker est une application web de suivi d'habitudes quotidiennes destinée à remplacer un Google Sheets contenant environ 27 habitudes suivies depuis mi-2024.
+
+Fonctionnalités prévues :
+
+- validation quotidienne d'habitudes ;
+- habitudes simples ou associées à plusieurs choix ;
+- notes sur les validations ;
+- historique et statistiques ;
+- calcul de séries de jours consécutifs ;
+- sessions sportives ;
+- système d'XP et de gamification.
+
+## État actuel
+
+Le backend est implémenté et ses routes ont été testées manuellement avec Postman.
+
+Il n'existe pas encore de tests automatisés. Le frontend Vue 3 n'est pas encore présent dans le dépôt. Le déploiement sur le homelab est un objectif futur, mais il n'est pas encore configuré.
 
 ## Stack technique
 
 | Couche | Technologie |
 |---|---|
-| Backend | Node.js + Fastify + TypeScript |
+| Backend | Node.js, Fastify et TypeScript |
 | ORM | Drizzle ORM |
-| Base de données | PostgreSQL 16 (Docker) |
+| Base de données | PostgreSQL 16 avec Docker |
 | Validation | Zod v4 |
-| Auth | JWT via @fastify/jwt |
-| Hashage | bcryptjs (pas bcrypt — problèmes de compilation native sur certains PC) |
-| Frontend | Vue 3 (prochaine étape) |
-| Conteneurisation | Docker + Docker Compose |
+| Authentification | JWT avec `@fastify/jwt` |
+| Hashage | `bcrypt` actuellement |
+| Frontend | Vue 3, à créer |
+| Conteneurisation | Docker Compose pour PostgreSQL |
 
----
+### Écart connu concernant bcrypt
 
-## Structure du projet
+Le choix initial documenté était `bcryptjs`, afin d'éviter les problèmes de compilation native sur certains PC Windows. Le code et le `package.json` utilisent actuellement `bcrypt`.
 
-```
-habit-tracker/
-├── backend/
-│   ├── src/
-│   │   ├── db/
-│   │   │   ├── schema.ts        ← description des tables Drizzle
-│   │   │   └── client.ts        ← connexion PostgreSQL
-│   │   ├── repositories/
-│   │   │   ├── userRepository.ts
-│   │   │   ├── habitRepository.ts
-│   │   │   └── logRepository.ts
-│   │   ├── services/
-│   │   │   ├── authService.ts
-│   │   │   ├── habitService.ts
-│   │   │   └── logService.ts
-│   │   ├── routes/
-│   │   │   ├── auth.ts
-│   │   │   ├── habits.ts
-│   │   │   └── logs.ts
-│   │   ├── schemas/
-│   │   │   ├── auth.schema.ts   ← validation Zod register/login
-│   │   │   ├── habit.schema.ts  ← validation Zod création habitude
-│   │   │   └── log.schema.ts    ← validation Zod création log
-│   │   ├── types/
-│   │   │   └── fastify.d.ts     ← déclaration du décorateur authenticate
-│   │   └── server.ts            ← point d'entrée Fastify + error handler Zod
-│   ├── drizzle.config.ts
-│   ├── tsconfig.json
-│   ├── package.json
-│   └── .env                     ← jamais commité
-├── frontend/                    ← pas encore commencé
-└── docker-compose.yml
+Cette incohérence est conservée pour le moment : la documentation décrit le code réel. Une migration vers `bcryptjs` pourra être faite séparément.
+
+## Structure actuelle
+
+```text
+Habit-Tracker/
+|-- backend/
+|   |-- src/
+|   |   |-- db/
+|   |   |   |-- schema.ts
+|   |   |   `-- client.ts
+|   |   |-- repositories/
+|   |   |-- routes/
+|   |   |-- schemas/
+|   |   |-- services/
+|   |   |-- types/
+|   |   `-- server.ts
+|   |-- drizzle.config.ts
+|   |-- package.json
+|   `-- tsconfig.json
+|-- context.md
+|-- docker-compose.yml
+|-- progress.md
+`-- README.md
 ```
 
----
+Le dossier `frontend/` sera créé lors de l'initialisation de Vue 3.
+
+## Architecture backend
+
+Le backend suit le flux :
+
+```text
+Route -> Service -> Repository -> Drizzle -> PostgreSQL
+```
+
+- **Routes** : gèrent HTTP, lisent les paramètres, valident le body avec Zod, appellent les services et construisent les réponses.
+- **Schemas** : décrivent et valident les données externes avec Zod.
+- **Services** : contiennent les règles métier et les vérifications d'autorisation.
+- **Repositories** : exécutent uniquement les opérations de base de données.
+- **Drizzle** : construit les requêtes SQL à partir du schéma TypeScript.
+
+Équivalences avec Spring Boot et Symfony :
+
+| Habit Tracker | Spring Boot | Symfony |
+|---|---|---|
+| Route Fastify | Controller | Controller |
+| Schéma Zod | DTO et Bean Validation | DTO et Validator |
+| Service | Service | Service |
+| Repository | Spring Data Repository | Doctrine Repository |
+| Schéma Drizzle | Entité JPA | Entité Doctrine |
+| Drizzle | JPA / EntityManager | Doctrine ORM / DBAL |
 
 ## Schéma de base de données
+
+```text
+users
+  `-- habits
+      |-- choices
+      `-- habit_logs
+          `-- habit_log_choices
+```
+
+Tables :
 
 ```sql
 users (id, email, password_hash, created_at)
 habits (id, user_id, name, has_choices, created_at)
 choices (id, habit_id, name)
-habit_logs (id, habit_id, logged_date, note) -- UNIQUE(habit_id, logged_date)
-habit_log_choices (log_id, choice_id) -- PK composite
+habit_logs (id, habit_id, logged_date, note)
+habit_log_choices (log_id, choice_id)
 ```
 
-Principe clé : l'existence d'un log implique que l'habitude a été faite. Pas de colonne `completed`.
+Principes importants :
 
-`has_choices` est gardé volontairement sur `habits` pour optimiser les requêtes front même si c'est déductible.
+- l'existence d'un log signifie que l'habitude a été réalisée ;
+- il n'existe donc pas de colonne `completed` ;
+- la contrainte unique `(habit_id, logged_date)` empêche de valider deux fois la même habitude le même jour ;
+- `habit_log_choices` possède une clé primaire composite ;
+- les clés étrangères utilisent `ON DELETE CASCADE` ;
+- `has_choices` est conservé sur `habits` même si l'information pourrait être déduite, afin de simplifier les lectures côté frontend.
 
----
+## Authentification
 
-## Architecture backend
+Après une inscription ou une connexion, le backend génère un JWT contenant :
 
-La structure suit le pattern **Route → Service → Repository → Drizzle** :
+```ts
+{ userId: user.id }
+```
 
-- **Routes** : gèrent la requête HTTP, valident le body avec Zod, appellent le service, renvoient la réponse
-- **Schemas** : schémas Zod de validation — équivalent des DTOs Spring/Symfony
-- **Services** : contiennent la logique métier (vérifications, règles)
-- **Repositories** : accès à la base uniquement, aucune logique métier
-- **Drizzle** : remplace la couche Repository "brute" — génère le SQL depuis le schéma TypeScript
+Les routes protégées attendent ensuite :
 
-Équivalences Spring Boot / Symfony :
-- `schema.ts` = entités JPA / Entity Doctrine
-- `repositories/` = Repository Spring Data / Repository Doctrine
-- `services/` = Service Spring / Service Symfony
-- `routes/` = Controller Spring / Controller Symfony
-- `schemas/` = DTOs avec annotations de validation
-- Drizzle = EntityManager / DBAL
+```http
+Authorization: Bearer <token>
+```
 
----
+Le décorateur Fastify `authenticate` appelle `request.jwtVerify()`. Sa déclaration TypeScript se trouve dans `src/types/fastify.d.ts`, car TypeScript ne peut pas déduire automatiquement les propriétés ajoutées avec `app.decorate()`.
 
 ## Points techniques importants
 
-- `"type": "module"` dans package.json → syntaxe import/export ESM
-- Les imports de fichiers locaux utilisent `.js` même pour des fichiers `.ts` (convention TypeScript ESM)
-- `tsx` permet de lancer TypeScript directement sans compilation manuelle
-- `drizzle-kit push` lit `schema.ts` et crée/met à jour les tables en base
-- Le décorateur `authenticate` est déclaré dans `types/fastify.d.ts` pour que TypeScript le reconnaisse sur `FastifyInstance`
-- `bcryptjs` au lieu de `bcrypt` pour éviter les problèmes de compilation native sur Windows
-- Zod v4 : utiliser `z.email()` et `z.uuid()` directement, pas `z.string().email()` (déprécié)
-- Zod v4 : utiliser `error.issues` pas `error.errors`
-- Error handler global dans `server.ts` qui intercepte les `ZodError` et renvoie un 400 avec les détails
-
----
+- `"type": "module"` active les modules JavaScript ESM.
+- Les imports locaux utilisent l'extension `.js`, même dans les fichiers `.ts`, car les fichiers exécutés après compilation sont des fichiers JavaScript.
+- `tsx` lance TypeScript directement en développement.
+- Zod valide les données à l'exécution, contrairement aux types TypeScript qui disparaissent après compilation.
+- Avec Zod v4, le projet utilise `z.email()`, `z.uuid()` et `error.issues`.
+- Le gestionnaire d'erreurs global transforme les `ZodError` en réponses HTTP `400`.
+- `drizzle-kit push` lit `src/db/schema.ts` et synchronise le schéma PostgreSQL.
+- Le volume Docker `habit_db_data` conserve les données lorsque le conteneur est arrêté ou recréé.
 
 ## Configuration locale
 
-- Docker Desktop requis pour PostgreSQL en local
-- PostgreSQL tourne sur le port `5432` (attention aux conflits si PostgreSQL est installé nativement — changer le port dans docker-compose.yml si nécessaire)
-- `.env` à créer manuellement sur chaque nouveau PC (non commité) :
+Prérequis :
+
+- Node.js et npm ;
+- Docker Desktop ou Docker Engine avec Docker Compose.
+
+Le conteneur PostgreSQL écoute sur le port `5432`, mais Docker l'expose sur le port `5433` de la machine :
+
+```text
+localhost:5433 -> conteneur PostgreSQL:5432
+```
+
+Créer manuellement `backend/.env`, car ce fichier contient des secrets et n'est pas versionné :
 
 ```env
-DATABASE_URL=postgresql://habit_user:habit_password@localhost:5432/habit_tracker
+DATABASE_URL=postgresql://habit_user:habit_password@localhost:5433/habit_tracker
 JWT_SECRET=une_chaine_aleatoire_longue
 PORT=3000
 FRONTEND_URL=http://localhost:5173
 ```
 
-- Commandes utiles :
-  - `docker compose up -d` (depuis la racine) → démarre PostgreSQL
-  - `docker compose up -d --build` → démarre en reconstruisant les images
-  - `npm run dev` (depuis backend/) → démarre le serveur
-  - `npm run db:push` (depuis backend/) → applique le schéma en base
+Installation et lancement :
 
----
+```powershell
+cd backend
+npm ci
+cd ..
+docker compose up -d
+cd backend
+npm run db:push
+npm run dev
+```
 
-## Postman
-Collection configurée avec :
-- Environnement "Habit Tracker Local" avec variables `{{baseUrl}}` et `{{token}}`
-- Authorization Bearer `{{token}}` au niveau de la collection
-- Script dans le endpoint login pour auto-sauvegarder le token : `pm.environment.set("token", pm.response.json().token)`
+`npm ci` doit être lancé dans `backend/`, car le `package.json` contenant les dépendances de l'application se trouve dans ce dossier.
 
----
+## Routes disponibles
 
-## Repo Git
+Routes publiques :
+
+- `POST /api/auth/register`
+- `POST /api/auth/login`
+
+Routes protégées par JWT :
+
+- `GET /api/habits`
+- `POST /api/habits`
+- `DELETE /api/habits/:id`
+- `GET /api/logs/:habitId`
+- `POST /api/logs/:habitId`
+- `DELETE /api/logs/:id`
+
+## Limites connues
+
+- Aucun test automatisé n'est encore présent.
+- Certaines erreurs métier génériques peuvent être renvoyées avec un statut HTTP imprécis.
+- La lecture et la suppression de logs ne vérifient pas encore systématiquement leur appartenance à l'utilisateur connecté.
+- La création d'une habitude avec choix ne renvoie pas les choix créés.
+- `bcrypt` peut poser des problèmes d'installation native sur certaines machines Windows.
+- Le frontend et le déploiement de production restent à réaliser.
+
+## Déploiement homelab prévu
+
+L'objectif à terme est de déployer l'application sur un Asus M32 sous Ubuntu Server 24.04, avec Docker et un accès via Cloudflare Tunnel et le domaine `bidouche.fr`.
+
+Travail restant :
+
+- créer le frontend Vue 3 ;
+- ajouter les Dockerfiles de production ;
+- adapter Docker Compose pour l'application complète ;
+- gérer les variables secrètes de production ;
+- configurer le tunnel Cloudflare ;
+- déployer et vérifier la persistance des données.
+
+## Dépôt Git
+
 https://github.com/Corentinausorus/Habit-Tracker

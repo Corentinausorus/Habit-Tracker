@@ -7,7 +7,7 @@ export default async function authRoutes(app: FastifyInstance) {
   app.post('/register', async (request: any, reply: any) => {
     const body = registerSchema.parse(request.body)
 
-    const user = await register(body.email, body.password)
+    const user = await register(body.email, body.password, body.username)
     const token = app.jwt.sign({ userId: user.id })
 
     return reply.code(201).send({ token, user })

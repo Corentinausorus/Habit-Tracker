@@ -11,10 +11,10 @@ export async function findByEmail(email: string) {
   return user ?? null
 }
 
-export async function createUser(email: string, passwordHash: string) {
+export async function createUser(email: string, passwordHash: string, username : string) {
   const [user] = await db
     .insert(users)
-    .values({ email, passwordHash })
+    .values({ email, passwordHash, username })
     .returning({ id: users.id, email: users.email })
 
   return user

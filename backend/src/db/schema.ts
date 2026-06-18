@@ -6,6 +6,7 @@ export const users = pgTable('users', {
   email:        varchar('email', { length: 255 }).unique().notNull(),
   passwordHash: varchar('password_hash', { length: 255 }).notNull(),
   createdAt:    timestamp('created_at').default(sql`NOW()`),
+  username:        varchar('username', { length: 255 }).unique().notNull()
 })
 
 export const habits = pgTable('habits', {

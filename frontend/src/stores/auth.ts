@@ -1,7 +1,7 @@
 import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
 
-import { loginRequest, type User } from '@/services/authApi'
+import { loginRequest, registerRequest, type User } from '@/services/authApi'
 
 const TOKEN_STORAGE_KEY = 'habit-tracker-token'
 const USER_STORAGE_KEY = 'habit-tracker-user'
@@ -26,6 +26,15 @@ export const useAuthStore = defineStore('auth', () => {
   const user = ref<User | null>(readStoredUser())
   const isAuthenticated = computed(() => Boolean(token.value && user.value))
 
+  async function register(email: string, password: string, username : string): Promise<void>{
+    const session = await registerRequest(email,password,username)
+
+    token.value = session.token
+    user.value = session.user
+    localStorage.setItem(TOKEN_STORAGE_KEY, session.token)
+    localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(session.user))
+  }
+
   async function login(email: string, password: string): Promise<void> {
     const session = await loginRequest(email, password)
 
@@ -48,5 +57,6 @@ export const useAuthStore = defineStore('auth', () => {
     isAuthenticated,
     login,
     logout,
+    register,
   }
 })

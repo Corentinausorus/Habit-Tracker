@@ -1,12 +1,12 @@
 import bcrypt from 'bcrypt'
 import { findByEmail, createUser } from '../repositories/userRepository.js'
 
-export async function register(email: string, password: string) {
+export async function register(email: string, password: string, username: string) {
   const existing = await findByEmail(email)
   if (existing) throw new Error('Cet email est déjà utilisé')
 
   const passwordHash = await bcrypt.hash(password, 10)
-  return createUser(email, passwordHash)
+  return createUser(email, passwordHash, username)
 }
 
 export async function login(email: string, password: string) {

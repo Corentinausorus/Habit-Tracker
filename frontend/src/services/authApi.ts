@@ -1,9 +1,14 @@
 export interface User {
   id: string
   email: string
+  username: string
 }
 
 export interface LoginResponse {
+  token: string
+  user: User
+}
+export interface RegisterResponse {
   token: string
   user: User
 }
@@ -38,3 +43,27 @@ export async function loginRequest(email: string, password: string): Promise<Log
 
   return body
 }
+
+export async function registerRequest(email: string, password: string, username : string): Promise<RegisterResponse> {
+  let response: Response
+
+  try {
+    response = await fetch(`${apiUrl}/api/auth/register`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({email, password, username}),
+      })
+    }catch{
+      throw new Error("Impossible de contacter l'API. Vérifie que le backend est démarré.")
+    }
+
+    const body = (await response.json().catch(() => ({}))) as RegisterResponse & ApiErrorResponse
+    if (!response.ok){
+      throw new Error(body.message || body.error || 'L inscription a échoué.')
+    }
+
+    return body
+}
+

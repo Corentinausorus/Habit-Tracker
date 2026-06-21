@@ -1,10 +1,52 @@
 import { FastifyInstance } from 'fastify'
-import { getHabitLogs, logHabit, removeLog } from '../services/logService.js'
-import { createLogSchema } from '../schemas/log.schema.js'
+import {
+  getHabitLogs,
+  getTodayHabitLog,
+  logHabit,
+  removeLog,
+  removeTodayHabitLog,
+  setTodayHabitLog,
+} from '../services/logService.js'
+import { createLogSchema, setTodayLogSchema } from '../schemas/log.schema.js'
 
 export default async function logRoutes(app: FastifyInstance) {
 
   const auth = { preHandler: [app.authenticate] }
+
+  app.get('/:habitId/today', auth, async (request: any, reply: any) => {
+    const { userId } = request.user as { userId: string }
+    const { habitId } = request.params as { habitId: string }
+
+    const log = await getTodayHabitLog(habitId, userId)
+    return reply.send(log)
+  })
+
+  app.put('/:habitId/today', auth, async (request: any, reply: any) => {
+    const { userId } = request.user as { userId: string }
+    const { habitId } = request.params as { habitId: string }
+    const body = setTodayLogSchema.parse(request.body)
+
+    try {
+      const log = await setTodayHabitLog(habitId, userId, body.choiceIds, body.note)
+      return reply.send(log)
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Erreur inconnue'
+      return reply.code(400).send({ message })
+    }
+  })
+
+  app.delete('/:habitId/today', auth, async (request: any, reply: any) => {
+    const { userId } = request.user as { userId: string }
+    const { habitId } = request.params as { habitId: string }
+
+    try {
+      await removeTodayHabitLog(habitId, userId)
+      return reply.code(204).send()
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Erreur inconnue'
+      return reply.code(400).send({ message })
+    }
+  })
 
   app.get('/:habitId', auth, async (request: any, reply: any) => {
     const { habitId } = request.params as { habitId: string }

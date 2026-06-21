@@ -11,7 +11,10 @@ Préférences :
 - réponses concises et directes ;
 - explication du rôle de chaque couche ;
 - réponse aux questions conceptuelles avant d'avancer ;
-- ne pas demander de répéter un contexte déjà documenté.
+- ne pas demander de répéter un contexte déjà documenté ;
+- garder une approche pédagogique : expliquer ce qui est fait, pourquoi, et dans quelle couche ;
+- ne pas prendre d'initiative sur les choix fonctionnels importants ;
+- poser une question lorsqu'un choix produit n'est pas explicitement défini.
 
 ## Description du projet
 
@@ -27,11 +30,32 @@ Fonctionnalités prévues :
 - sessions sportives ;
 - système d'XP et de gamification.
 
+## Organisation fonctionnelle des écrans
+
+La page d'accueil (`HomeView`) doit rester simple et orientée usage quotidien :
+
+- après connexion, l'utilisateur arrive directement sur la liste des habitudes du jour ;
+- il peut voir les habitudes prévues pour la journée ;
+- il peut cocher ou décocher une habitude selon qu'elle est faite ou non ;
+- cette page ne doit pas devenir l'écran principal de configuration des habitudes.
+
+La gestion des habitudes doit être séparée de l'accueil, dans un écran clair accessible via `/manage-habits` :
+
+- ajouter une habitude ;
+- désactiver une habitude ;
+- modifier le nom d'une habitude ;
+- modifier le type d'une habitude : simple ou avec choix ;
+- ajouter des choix à une habitude ;
+- supprimer des choix ;
+- préparer plus tard la gestion de la récurrence/redondance : tous les jours, certaines semaines, certains mois, etc.
+
+Une habitude n'est donc pas seulement un texte. Le modèle fonctionnel doit rester évolutif pour supporter les choix, la récurrence, puis les statistiques et la gamification.
+
 ## État actuel
 
 Le backend est implémenté et ses routes ont été testées manuellement avec Postman.
 
-Il n'existe pas encore de tests automatisés. Le frontend Vue 3 est initialisé avec une page de connexion, une session Pinia persistée dans `localStorage` et une page d'accueil protégée. Le déploiement sur le homelab est un objectif futur, mais il n'est pas encore configuré.
+Il n'existe pas encore de tests automatisés. Le frontend Vue 3 est initialisé avec une page de connexion, une page d'inscription, une session Pinia persistée dans `localStorage` et une page d'accueil protégée. Une première interface frontend permet actuellement d'ajouter et d'afficher des habitudes simples, mais elle doit être séparée ensuite de `HomeView` pour devenir un écran de gestion des habitudes. Le déploiement sur le homelab est un objectif futur, mais il n'est pas encore configuré.
 
 ## Stack technique
 
@@ -158,6 +182,13 @@ Principes importants :
 - il n'existe donc pas de colonne `completed` ;
 - la contrainte unique `(habit_id, logged_date)` empêche de valider deux fois la même habitude le même jour ;
 - `habit_log_choices` possède une clé primaire composite ;
+- pour une habitude avec choix, plusieurs choix peuvent être associés au même log du jour, par exemple `Sport` avec `tennis` et `volley` le même jour ;
+- un même choix ne peut compter qu'une seule fois par jour : si `tennis` est fait plusieurs fois dans la journée, il reste sélectionné une seule fois ;
+- un choix d'habitude ne doit pas être supprimé physiquement s'il peut avoir servi dans l'historique ; il doit être désactivé via `choices.is_active` afin que les anciens logs gardent une référence lisible ;
+- pour une habitude simple, l'existence du log du jour signifie qu'elle est faite ;
+- pour une habitude avec choix, l'existence du log du jour avec au moins un choix associé signifie qu'elle est faite ;
+- si tous les choix d'une habitude sont décochés pour aujourd'hui, le log du jour est supprimé ;
+- la logique de validation quotidienne doit chercher le log existant du jour côté backend : s'il existe, elle met à jour ses choix ; sinon, elle crée le log puis associe les choix ;
 - les clés étrangères utilisent `ON DELETE CASCADE` ;
 - `has_choices` est conservé sur `habits` même si l'information pourrait être déduite, afin de simplifier les lectures côté frontend.
 

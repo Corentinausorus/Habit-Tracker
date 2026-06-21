@@ -21,7 +21,10 @@ export const choices = pgTable('choices', {
   id:      uuid('id').primaryKey().default(sql`gen_random_uuid()`),
   habitId: uuid('habit_id').notNull().references(() => habits.id, { onDelete: 'cascade' }),
   name:    varchar('name', { length: 255 }).notNull(),
-})
+  isActive: boolean('is_active').default(true).notNull(),
+}, (table) => ({
+  uniqHabitChoiceName: unique().on(table.habitId, table.name)
+}))
 
 export const habitLogs = pgTable('habit_logs', {
   id:         uuid('id').primaryKey().default(sql`gen_random_uuid()`),
